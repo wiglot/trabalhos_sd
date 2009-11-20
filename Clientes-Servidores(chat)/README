@@ -1,0 +1,7 @@
+
+
+Para executar os servidores entre na pasta do servidor (server[1,2,3]) e execute 'python server.py'. Existem links dentro das pastar para o arquivo do servidor (server.py)
+
+para os cliente basta executar 'python client.py [opções]' para listar das opções  use -h ou --help
+
+Joseane e Wagner
