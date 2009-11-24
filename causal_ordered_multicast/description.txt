@@ -1,0 +1,19 @@
+servidor (thread).
+  Ao receber a mensagem, divide em ID de quem enviou, vetor enviado, e mensagem.
+  se o ID for diferente de seu próprio ID então:
+    envia o vetor e mensagem para serem processados.
+
+Processar mensagem e vetor (auxiliar do servidor)
+  se o valor(somatório) do vetor é menor ou igual ao valor do (vetor armazenado + 1)
+    apresenta a mensagem
+    armazena o novo vetor.
+    se a fila de mensagens armazenadas tem mensagens
+      testa as mensagens que podem ser mostradas
+      se sim, mostra a mensagem selecionada e armazena o novo vetor
+  senão
+    armazena a mensagem e o vetor em uma lista.
+
+Entrada ()
+  lê comandos do usuário
+  se for mensagem apenas envia para rede (diretamente).
+  recebe notificação para mostrar as mensagens na tela do servidor.
