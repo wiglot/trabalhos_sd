@@ -25,6 +25,8 @@ class Server(Thread):
         mreq = struct.pack('4sl', socket.inet_aton(self.__addr), socket.INADDR_ANY)
         self.__fd.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
+
+
     def parse(self, message):
         tmp = message.split('"')
         msg = tmp[1]
@@ -37,6 +39,8 @@ class Server(Thread):
 
         return [int(ID), vector, msg]
 
+
+
     def run(self):
 
         while 1:
@@ -45,7 +49,6 @@ class Server(Thread):
             if (message[0] != self.__messages.ID()):
                 self.__messages.received(message[0], message[1], message[2]);
         
-             
   
 class Messages:
     def __init__(self, ID):
@@ -54,6 +57,7 @@ class Messages:
       self.__myID = ID
       while len(self.__vector) < (ID+1):
            self.__vector.append(0)
+
     def sendVector(self):
         self.__vector[self.__myID] += 1;
         k = ''
@@ -64,38 +68,40 @@ class Messages:
     def ID(self):
         return self.__myID
 
-    def sumVector(self, vector):
-        s = 0
-        for i in vector:
-            s += i
-        return s;
-
-    def canPrint(self, vector):
-        if (self.sumVector(vector) <= (self.sumVector(self.__vector)+1)):
-            return True
-        return False
+    def canPrint(self, ID, vector):
+	if len(vector) > len(self.__vector):
+	    while len(vector) > len(self.__vector):
+		self.__vector.append(0);
+	if len(vector) < len(self.__vector):
+	    for i in range(len(vector), len(self.__vector)-1):
+		if i != 0:
+		    return False
+	for i in range(0,len(vector)-1):
+	    if i != ID:
+		if vector[i] != self.__vector[i]:
+		    return False
+	if vector[ID] <= (self.__vector[ID] + 1):
+	      return True;
+	return False
 
     def setVectot(self, vector):
         self.__vector = vector;
     
     def updateVector(self, ID):
-        #if (len(self.__vector)+1) >= ID:
-            #self.__vector[ID] += 1
-        #else:
-        while len(self.__vector) <= (ID+1):
+        while len(self.__vector) < (ID+1):
             self.__vector.append(0)
         self.__vector[ID] += 1
 
     def received(self, ID, vector, message ):
-        if self.canPrint(vector):
+        if self.canPrint(ID, vector):
             self.updateVector(ID)
             print message
             for i in self.__queueMessages:
-                if self.canPrint(i[0]):
+                if self.canPrint(i[0], i[1]):
                     self.__queueMessages.remove(i)
-                    self.received(ID, i[0], i[1])
+                    self.received(i[0], i[1], i[2])
         else:
-            self.__queueMessages.append((vector, message))
+            self.__queueMessages.append((ID, vector, message))
 
 class Input:
     def __init__ (self, ID, addr, port):
@@ -106,6 +112,7 @@ class Input:
         self.__messages = Messages(int(ID))
         self.__server = Server(self.__messages, self.__addr, self.__port)
         self.__server.start();
+
     def read(self):
         while 1:
           try:
@@ -113,14 +120,13 @@ class Input:
               if len(inp) > 0:
                   if inp[0] == '#':
                       print "At your command sir!"
+		      if inp.upper() in ["#QUIT", "#EXIT"]:
+			  sys.exit(0);
                   else:
                       inp = str(ID) + self.__messages.sendVector() + '"' + inp + '"'
                       self.__fd.sendto(inp, (addr, port))
           except KeyboardInterrupt:
-              self.quit();
               sys.exit(0);
-    def quit(self):
-          print "Kill server and flush messages."
 
 
 if __name__ == '__main__':
