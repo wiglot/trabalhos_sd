@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import socket
+from threading import Semaphore
 
 class Server:
   def __init__(self, port):
@@ -7,6 +8,10 @@ class Server:
       self.__readLock = False
       self.__writeLock = False
       self.__locked = False
+
+      self.__token = "k"
+      self.__content = "Arquivo"
+
 
       self.__queue = []
 
@@ -24,8 +29,8 @@ class Server:
   def run(self):
       print "Hey"
       while 1:
-          try:
-	      self.__conn, addr = self.__connSocket.accept()
+          #try:
+              self.__conn, addr = self.__connSocket.accept()
               data = str(self.__conn.recv(32)).strip()
               if data.upper() == "READ" :
                   self.readRequest()
@@ -36,8 +41,8 @@ class Server:
               else:
                   self.__conn.send("Invalid String: "+data)
               self.__conn.close()
-          except:
-              break
+          #except:
+              #break
 
   def readRequest(self):
      if self.__writeLock:
@@ -46,22 +51,32 @@ class Server:
      self.__readLock = True
      self.__conn.send("yes")
      if str(self.__conn.recv(32)).upper().strip() == "SEND":
-        self.__conn.sendall("kkkrrr")#self.openFile())
+        self.__conn.sendall(self.__content)#self.openFile())
      self.__readLock = False
   
   def writeRequest(self):
-     while self.__readLock:
-          pass
+     if not self.__locked:
+        self.__conn.send("ERROR: Must ask for a lock")
+        return
 
      self.__writeLock = True
-     self.__conn.send("SEND")
-     f = openFile() 
-     while 1:
-	  data = self.__conn.recv(4096)
-	  if not data:
-              break
-          f.write(data)
-     f.close()
+
+     while self.__readLock:
+          pass
+     
+     self.__conn.send("SEND TOKEN")
+     data = str(self.__conn.recv(1024)).strip()
+     if data != self.__token:
+          self.__conn.send("Invalid Token: " + data)
+     else:
+          self.__conn.send("SEND")
+          self.__content
+          while 1:
+              data = self.__conn.recv(4096)
+              if not data:
+                    break
+              self.__content += data        
+
      self.__writeLock = False
      self.unlock()
 
@@ -69,17 +84,37 @@ class Server:
       if (self.__locked):
           self.__conn.send("NO")
           port = int(self.__conn.recv(32))
-	  self.__queue.append((addr, port))
+          self.__queue.append((addr[0], port))
           return
       self.__locked = True
       self.__conn.send("YES")
+      data = str(self.__conn.recv(32)).strip()
+      if data.upper() == "TOKEN":
+           self.__conn.send(self.__token)
       
   def unlock(self):
-      self.__locked = False
-      client = self.__queue[len(self.__queue)-1]
-      self.__queue.remove(client)
-      #send "UNLOCK" to client
+      self.__token = self.newToken()
+      if len (self.__queue) > 0:
+          client = self.__queue[0]
+          self.__queue.remove(client)
+          print "Lieberado para cliente: ", client, " with token: ", self.__token
+          try:
+              conn = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+              conn.connect(client)#send "UNLOCK" + new token to client
+              conn.send("UNLOCK")
+              data = str(conn.recv(32)).strip()
+              if data.upper() == "TOKEN":
+                  conn.send(self.__token)
+              conn.close()
+          except socket.error:
+              print "Cant Connect to Cliente: ", client
+              self.unlock()
 
+      else:
+          self.__locked = False
+
+  def newToken(self):
+      return "k"+self.__token
 
 server = Server(10000)
 server.run()
