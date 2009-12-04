@@ -1,0 +1,17 @@
+Sistema distribuido de controle de recursos.
+
+Dado um determinado recurso (arquivo por exemplo), tem-se vários clientes concorrendo por esse resurso.
+O algoritmo deve liberar ou negar acesso a esse recurso dependendo do que vai ser feito.
+
+Por exemplo, um arquivo pode ser acessado por mais de um cliente para leitura, porém, para escrita deve-se esperar todos liberarem o arquivo (caso tenha algum cliente lendo) e não liberar o recurso até que a escrita esteja concluída e o arquivo replicado para todos os pontos onde ele esteja disponível.
+
+#cliente deve fazer requisições de leitura (READ) e escrita (WRITE)
+#
+# READ -> YES -> SEND -> Conteudo do arquivo
+# READ -> NO -> Entra na fila (servidor avisa quem tah na fila qndo tah liberado)
+#
+# WRITE -> YES -> Envia conteudo do arquivo
+# WRITE -> NO -> Entra na fila (trava leitura, quando todos terminarem leitura ou escrita, libera)
+
+
+
