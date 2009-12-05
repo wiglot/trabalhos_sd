@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 import socket
+import string
+import random
 from threading import Semaphore
+
+
+
 
 class Server:
   def __init__(self, port):
@@ -9,7 +14,7 @@ class Server:
       self.__writeLock = False
       self.__locked = False
 
-      self.__token = "k"
+      self.__token = "".join([random.choice(string.letters+string.digits) for x in range(15)])
       self.__content = "Arquivo"
 
 
@@ -27,7 +32,7 @@ class Server:
             self.__port += 1
 
   def run(self):
-      print "Hey"
+      print "Server started"
       while 1:
           #try:
               self.__conn, addr = self.__connSocket.accept()
@@ -70,7 +75,7 @@ class Server:
           self.__conn.send("Invalid Token: " + data)
      else:
           self.__conn.send("SEND")
-          self.__content
+          self.__content = ""
           while 1:
               data = self.__conn.recv(4096)
               if not data:
@@ -86,11 +91,12 @@ class Server:
           port = int(self.__conn.recv(32))
           self.__queue.append((addr[0], port))
           return
-      self.__locked = True
+      
       self.__conn.send("YES")
       data = str(self.__conn.recv(32)).strip()
       if data.upper() == "TOKEN":
            self.__conn.send(self.__token)
+           self.__locked = True
       
   def unlock(self):
       self.__token = self.newToken()
@@ -114,7 +120,8 @@ class Server:
           self.__locked = False
 
   def newToken(self):
-      return "k"+self.__token
+      return "".join([random.choice(string.letters+string.digits) for x in range(15)])
+      
 
 server = Server(10000)
 server.run()
