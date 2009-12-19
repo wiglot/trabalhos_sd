@@ -54,6 +54,9 @@ class Client():
     def setContent(self, newContent):
         self.__content = newContent
 
+    def hasLock(self):
+        return self.__hasLock
+
     def execute(self, cmd):
         cmd = cmd.upper()
         if not cmd in ["READ", "WRITE", "LOCK"]:
@@ -99,14 +102,11 @@ class Client():
             return
         self.__conn.send("WRITE")
         data = self.__conn.recv(16).strip()
-        print data
         if data.upper() == "SEND TOKEN":
             self.__conn.send(self.__token)
             data = self.__conn.recv(16).strip()
-            print data
             if data.upper() in ["SEND"]:
                 self.__conn.sendall(self.__content)
-                print self.__content
         self.__hasLock = False
 	
     def lockRequest(self):
@@ -128,15 +128,25 @@ class Client():
 
 if __name__ == '__main__':
     ip = raw_input("Enter server IP: ")
-    port = raw_input("Enter server IP: ")
+    port = raw_input("Enter server PORT: ")
     client = Client(ip, port)
     inp = ""
-    while not inp.upper() in ["EXIT", "QUIT", "E", "Q"]:
-        inp = raw_input("#>")
-        if inp.upper() == "WRITE":
-            newContent = raw_input("# Enter Content> ")
-            client.setContent(newContent)
+    while 1:
+        inp = str(raw_input("#>")).strip().upper()
+        
+        if inp.upper() in ["EXIT", "QUIT", "E", "Q"]:
+            if client.hasLock():
+                client.execute("READ")
+                client.execute("WRITE")
+                client.execute("READ")
 
+            exit(0)
+        if inp.upper() == "WRITE":
+            client.execute("READ")
+            print client.content()
+            newContent = raw_input("# Enter new Content> ")
+            client.setContent(newContent)
         client.execute(inp)
-        print client.content()
+        if inp == "READ":
+            print client.content()
     exit(0)

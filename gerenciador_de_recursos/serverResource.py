@@ -2,9 +2,12 @@
 import socket
 import string
 import random
-from threading import Semaphore
+#from threading import Semaphore
 
-
+#listening port
+PORT = 10000
+#Initial Content
+CONTENT = "Stuff"
 
 
 class Server:
@@ -15,7 +18,7 @@ class Server:
       self.__locked = False
 
       self.__token = "".join([random.choice(string.letters+string.digits) for x in range(15)])
-      self.__content = "Arquivo"
+      self.__content = CONTENT
 
 
       self.__queue = []
@@ -34,7 +37,7 @@ class Server:
   def run(self):
       print "Server started"
       while 1:
-          #try:
+          try:
               self.__conn, addr = self.__connSocket.accept()
               data = str(self.__conn.recv(32)).strip()
               if data.upper() == "READ" :
@@ -46,8 +49,8 @@ class Server:
               else:
                   self.__conn.send("Invalid String: "+data)
               self.__conn.close()
-          #except:
-              #break
+          except:
+              break
 
   def readRequest(self):
      if self.__writeLock:
@@ -123,5 +126,7 @@ class Server:
       return "".join([random.choice(string.letters+string.digits) for x in range(15)])
       
 
-server = Server(10000)
+
+server = Server(PORT)
+
 server.run()
